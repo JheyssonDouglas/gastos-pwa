@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <title>Controle de Gastos</title>
+
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./css/styles.css" />
+
+  <!-- Dexie (IndexedDB) -->
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo">💸</div>
+      <div>
+        <div class="title">Controle de Gastos</div>
+        <div class="subtitle">Offline • PWA • Salvo no aparelho</div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button id="themeToggle" class="btn btn-ghost" type="button" aria-label="Alternar tema">
+        <span id="themeIcon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Navegação">
+    <button class="tab active" data-tab="home">Registrar</button>
+    <button class="tab" data-tab="insights">Insights</button>
+    <button class="tab" data-tab="settings">Config</button>
+  </nav>
+
+  <main class="container">
+    <!-- HOME -->
+    <section id="tab-home" class="tab-panel active">
+      <div class="grid">
+        <section class="card">
+          <h2>Novo gasto</h2>
+
+          <form id="expenseForm" class="form">
+            <div class="row">
+              <div class="field">
+                <label for="date">Data</label>
+                <input id="date" name="date" type="date" required />
+              </div>
+              <div class="field">
+                <label for="amount">Valor (R$)</label>
+                <input id="amount" name="amount" type="number" step="0.01" min="0" inputmode="decimal" required />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="category">Categoria</label>
+                <select id="category" name="category" required></select>
+              </div>
+              <div class="field">
+                <label for="subcategory">Subcategoria</label>
+                <select id="subcategory" name="subcategory" required></select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="paymentMethod">Método de pagamento</label>
+                <select id="paymentMethod" name="paymentMethod" required>
+                  <option value="pix">Pix</option>
+                  <option value="debito">Débito</option>
+                  <option value="credito">Crédito</option>
+                </select>
+              </div>
+
+              <div class="field" id="cardField" style="display:none;">
+                <label for="card">Cartão</label>
+                <select id="card" name="card">
+                  <option value="">—</option>
+                </select>
+              </div>
+
+              <div class="field" id="installmentsField" style="display:none;">
+                <label for="installments">Parcelas</label>
+                <select id="installments" name="installments">
+                  <option value="1">1x</option>
+                  <option value="2">2x</option>
+                  <option value="3">3x</option>
+                  <option value="4">4x</option>
+                  <option value="5">5x</option>
+                  <option value="6">6x</option>
+                  <option value="7">7x</option>
+                  <option value="8">8x</option>
+                  <option value="9">9x</option>
+                  <option value="10">10x</option>
+                  <option value="11">11x</option>
+                  <option value="12">12x</option>
+                  <option value="13">13x</option>
+                  <option value="14">14x</option>
+                  <option value="15">15x</option>
+                  <option value="16">16x</option>
+                  <option value="17">17x</option>
+                  <option value="18">18x</option>
+                  <option value="19">19x</option>
+                  <option value="20">20x</option>
+                  <option value="21">21x</option>
+                  <option value="22">22x</option>
+                  <option value="23">23x</option>
+                  <option value="24">24x</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row" id="fuelFields" style="display:none;">
+              <div class="field">
+                <label for="fuelPricePerLiter">Preço do combustível (R$/L) (opcional)</label>
+                <input id="fuelPricePerLiter" name="fuelPricePerLiter" type="number" step="0.01" min="0" inputmode="decimal" placeholder="Ex: 5,79" />
+              </div>
+              <div class="field">
+                <label for="fuelType">Tipo de combustível (opcional)</label>
+                <select id="fuelType" name="fuelType">
+                  <option value="">—</option>
+                  <option value="etanol">Etanol</option>
+                  <option value="etanol_aditivado">Etanol aditivado</option>
+                  <option value="gasolina">Gasolina</option>
+                  <option value="gasolina_aditivada">Gasolina aditivada</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="priority">Importância</label>
+                <select id="priority" name="priority" required>
+                  <option value="essencial">Essencial</option>
+                  <option value="importante">Importante</option>
+                  <option value="sem_importancia">Sem importância</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="merchant">Onde/Loja (opcional)</label>
+                <input id="merchant" name="merchant" type="text" maxlength="60" placeholder="Ex: Carrefour, iFood, Farmácia..." />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="description">Descrição</label>
+              <input id="description" name="description" type="text" maxlength="80" placeholder="Ex: almoço, remédio, gasolina..." />
+            </div>
+
+            <div class="row">
+              <button class="btn btn-primary" type="submit">Salvar gasto</button>
+              <button class="btn btn-ghost" id="quickCopyLast" type="button">Copiar último</button>
+            </div>
+
+            <input id="editingId" name="editingId" type="hidden" />
+          </form>
+
+          <div class="hint">
+            Dica: use “Copiar último” pra lançar rápido (só ajusta valor/data/descrição).
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>Seus gastos</h2>
+            <div class="pill" id="totalPill">Total: R$ 0,00</div>
+          </div>
+
+          <div class="filters">
+            <div class="row">
+              <div class="field">
+                <label for="rangeStart">Início</label>
+                <input id="rangeStart" type="date" />
+              </div>
+              <div class="field">
+                <label for="rangeEnd">Fim</label>
+                <input id="rangeEnd" type="date" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="filterCategory">Categoria</label>
+                <select id="filterCategory"></select>
+              </div>
+              <div class="field">
+                <label for="filterPayment">Pagamento</label>
+                <select id="filterPayment">
+                  <option value="">Todos</option>
+                  <option value="pix">Pix</option>
+                  <option value="debito">Débito</option>
+                  <option value="credito">Crédito</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field grow">
+                <label for="searchText">Buscar</label>
+                <input id="searchText" type="text" placeholder="descrição / loja..." />
+              </div>
+              <button class="btn btn-ghost" id="clearFilters" type="button">Limpar filtros</button>
+            </div>
+          </div>
+
+          <div id="expenseList" class="list"></div>
+          <div id="emptyState" class="empty" style="display:none;">
+            Nenhum gasto encontrado nesse filtro.
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- INSIGHTS -->
+    <section id="tab-insights" class="tab-panel">
+      <section class="card">
+        <div class="card-head">
+          <h2>Insights</h2>
+          <div class="pill" id="insightsPill">Período: —</div>
+        </div>
+
+        <div class="filters">
+          <div class="row">
+            <div class="field">
+              <label for="periodMode">Visão</label>
+              <select id="periodMode">
+                <option value="daily">Diária</option>
+                <option value="weekly">Semanal</option>
+                <option value="monthly" selected>Mensal</option>
+                <option value="yearly">Anual</option>
+                <option value="range">Range</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="insStart">Início</label>
+              <input id="insStart" type="date" />
+            </div>
+
+            <div class="field">
+              <label for="insEnd">Fim</label>
+              <input id="insEnd" type="date" />
+            </div>
+
+            <button class="btn btn-primary" id="refreshInsights" type="button">Atualizar</button>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" id="statTotal">R$ 0,00</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Média / dia</div>
+            <div class="stat-value" id="statAvg">R$ 0,00</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Top categoria</div>
+            <div class="stat-value" id="statTopCat">—</div>
+          </div>
+        </div>
+
+        <div class="charts">
+          <div class="chart-card">
+            <h3>Gasto ao longo do tempo</h3>
+            <canvas id="lineChart" height="120"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Por categoria</h3>
+            <canvas id="pieChart" height="120"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Por método de pagamento</h3>
+            <canvas id="barChart" height="120"></canvas>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="tab-settings" class="tab-panel">
+      <section class="card">
+        <h2>Configurações</h2>
+
+        <div class="settings-grid">
+          <div class="settings-card">
+            <h3>Categorias</h3>
+            <p>Você pode editar isso depois (V2). Por enquanto vem com um padrão bom.</p>
+          </div>
+
+          <div class="settings-card">
+            <h3>Backup</h3>
+            <div class="row">
+              <button class="btn btn-primary" id="exportJson" type="button">Exportar JSON</button>
+              <button class="btn btn-ghost" id="importJson" type="button">Importar JSON</button>
+            </div>
+
+            <div class="row">
+              <button class="btn btn-primary" id="exportCsv" type="button">Exportar CSV</button>
+              <button class="btn btn-ghost" id="exportSheets" type="button">Exportar p/ Google Sheets</button>
+            </div>
+
+            <input id="importFile" type="file" accept="application/json" style="display:none;" />
+            <div class="hint">
+              “Google Sheets”: gera CSV e abre uma planilha nova (sheet.new) pra você importar.
+            </div>
+          </div>
+
+          <div class="settings-card danger">
+            <h3>Zerar dados</h3>
+            <p>Apaga todos os gastos do app neste aparelho.</p>
+            <button class="btn btn-danger" id="resetAll" type="button">Apagar tudo</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Dados ficam no seu aparelho (IndexedDB). Use backup para não perder.</span>
+  </footer>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
