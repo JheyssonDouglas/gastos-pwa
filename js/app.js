@@ -84,10 +84,23 @@ const els = {
   exportCsv: document.getElementById("exportCsv"),
   exportSheets: document.getElementById("exportSheets"),
   resetAll: document.getElementById("resetAll"),
+  toast: document.getElementById("toast"),
 };
 
 let allExpenses = [];
 let lastExpense = null;
+
+let toastTimer = null;
+
+function showToast(message) {
+  if (!els.toast) return;
+  els.toast.textContent = message;
+  els.toast.style.display = "block";
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    els.toast.style.display = "none";
+  }, 2200);
+}
 
 // ---------- PWA ----------
 if ("serviceWorker" in navigator) {
@@ -331,6 +344,8 @@ els.form.addEventListener("submit", async (ev) => {
       createdAt: toLocalISOString(new Date())
     });
   }
+
+  showToast(isEditing ? "Gasto atualizado." : "Gasto salvo.");
 
   els.form.reset();
   els.date.value = todayISO();

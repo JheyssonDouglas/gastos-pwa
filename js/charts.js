@@ -103,7 +103,7 @@ export function buildInsights(expenses, mode) {
                e.paymentMethod === "debito" ? "Débito" : "Pix";
     byPayment[pm] = (byPayment[pm] || 0) + Number(e.amount || 0);
 
-    const knd = e.kind === "conta" ? "Conta" : "Compra";
+    const knd = e.kind === "conta" ? "Conta" : (e.kind === "doacao" ? "Doação" : "Compra");
     byKind[knd] = (byKind[knd] || 0) + Number(e.amount || 0);
 
     if (e.subcategory === "Delivery") {

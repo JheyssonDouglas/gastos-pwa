@@ -94,6 +94,7 @@ function labelPriority(p) {
 
 function labelKind(k) {
   if (k === "conta") return "Conta";
+  if (k === "doacao") return "Doação";
   return "Compra";
 }
 
