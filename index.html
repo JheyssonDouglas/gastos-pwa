@@ -365,7 +365,17 @@
     <span>Dados ficam no seu aparelho (IndexedDB). Use backup para não perder.</span>
   </footer>
 
-  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" style="display:none;"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <div id="confirmOverlay" class="modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <h3 id="confirmTitle">Salvo!</h3>
+      <p id="confirmMessage">Registro salvo com sucesso.</p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="confirmOk" type="button">OK</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="./js/app.js"></script>
 </body>

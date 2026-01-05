@@ -85,6 +85,9 @@ const els = {
   exportSheets: document.getElementById("exportSheets"),
   resetAll: document.getElementById("resetAll"),
   toast: document.getElementById("toast"),
+  confirmOverlay: document.getElementById("confirmOverlay"),
+  confirmMessage: document.getElementById("confirmMessage"),
+  confirmOk: document.getElementById("confirmOk"),
 };
 
 let allExpenses = [];
@@ -95,12 +98,46 @@ let toastTimer = null;
 function showToast(message) {
   if (!els.toast) return;
   els.toast.textContent = message;
-  els.toast.style.display = "block";
+  els.toast.classList.add("show");
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
-    els.toast.style.display = "none";
+    els.toast.classList.remove("show");
   }, 2200);
 }
+
+function openConfirmModal(message) {
+  if (!els.confirmOverlay) {
+    showToast(message);
+    return;
+  }
+  if (els.confirmMessage) els.confirmMessage.textContent = message;
+  els.confirmOverlay.classList.add("show");
+  els.confirmOverlay.setAttribute("aria-hidden", "false");
+  if (els.confirmOk) els.confirmOk.focus();
+}
+
+function closeConfirmModal() {
+  if (!els.confirmOverlay) return;
+  els.confirmOverlay.classList.remove("show");
+  els.confirmOverlay.setAttribute("aria-hidden", "true");
+}
+
+if (els.confirmOverlay) {
+  els.confirmOverlay.addEventListener("click", (ev) => {
+    if (ev.target === els.confirmOverlay) closeConfirmModal();
+  });
+}
+
+if (els.confirmOk) {
+  els.confirmOk.addEventListener("click", () => closeConfirmModal());
+}
+
+document.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Escape") return;
+  if (!els.confirmOverlay) return;
+  if (!els.confirmOverlay.classList.contains("show")) return;
+  closeConfirmModal();
+});
 
 // ---------- PWA ----------
 if ("serviceWorker" in navigator) {
@@ -345,7 +382,7 @@ els.form.addEventListener("submit", async (ev) => {
     });
   }
 
-  showToast(isEditing ? "Gasto atualizado." : "Gasto salvo.");
+  openConfirmModal(isEditing ? "Gasto atualizado." : "Gasto salvo.");
 
   els.form.reset();
   els.date.value = todayISO();
