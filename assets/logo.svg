@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" role="img" aria-label="Controle de Gastos">
+  <defs>
+    <linearGradient id="g" x1="12" y1="8" x2="52" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#16a34a"/>
+    </linearGradient>
+    <filter id="s" x="0" y="0" width="64" height="64" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <rect x="10" y="10" width="44" height="44" rx="14" fill="url(#g)" filter="url(#s)"/>
+
+  <circle cx="30" cy="32" r="10" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.95"/>
+  <path d="M26.5 32.5c2.3 2.1 5.2 2.5 7.6.9" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.95"/>
+
+  <path d="M35.5 38.2l2.6 2.6 6.4-6.4" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+</svg>

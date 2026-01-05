@@ -29,8 +29,10 @@ export function renderExpenses(listEl, expenses, handlers) {
       <div class="item-sub">
         <span class="badge">${e.date}</span>
         <span class="badge">${escapeHTML(e.category)} • ${escapeHTML(e.subcategory)}</span>
+        <span class="badge">${labelKind(e.kind)}</span>
         <span class="badge">${labelPayment(e.paymentMethod, e.card)}${labelInstallments(e.paymentMethod, e.installments) ? ` • ${labelInstallments(e.paymentMethod, e.installments)}` : ""}</span>
         <span class="badge">${labelPriority(e.priority)}</span>
+        ${deliveryBadges(e)}
         ${fuelBadges(e)}
         ${e.merchant ? `<span class="badge">${escapeHTML(e.merchant)}</span>` : ""}
       </div>
@@ -85,9 +87,28 @@ function labelFuelType(t) {
 }
 
 function labelPriority(p) {
-  if (p === "essencial") return "Essencial";
-  if (p === "importante") return "Importante";
-  return "Sem importância";
+  if (p === "essencial") return "Alta";
+  if (p === "importante") return "Média";
+  return "Baixa";
+}
+
+function labelKind(k) {
+  if (k === "conta") return "Conta";
+  return "Compra";
+}
+
+function deliveryBadges(e) {
+  if (e.subcategory !== "Delivery") return "";
+  if (!e.deliveryProvider) return "";
+  const label = labelDeliveryProvider(e.deliveryProvider, e.deliveryProviderOther);
+  return label ? `<span class="badge">${escapeHTML(label)}</span>` : "";
+}
+
+function labelDeliveryProvider(p, other) {
+  if (p === "ifood") return "iFood";
+  if (p === "99") return "99";
+  if (p === "outros") return other ? other : "Outros";
+  return String(p || "");
 }
 
 function escapeHTML(s) {

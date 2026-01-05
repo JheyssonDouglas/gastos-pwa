@@ -105,7 +105,7 @@ export function summarizeTopCategory(byCategoryMap) {
 
 export function toCSV(expenses) {
   const headers = [
-    "id","date","amount","category","subcategory","paymentMethod","card","installments","fuelPricePerLiter","fuelType","priority","merchant","description","createdAt"
+    "id","date","amount","category","subcategory","kind","deliveryProvider","deliveryProviderOther","paymentMethod","card","installments","fuelPricePerLiter","fuelType","priority","merchant","description","createdAt"
   ];
   const escape = (x) => {
     const s = String(x ?? "");

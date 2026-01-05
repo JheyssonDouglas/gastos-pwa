@@ -13,6 +13,10 @@ db.version(3).stores({
   expenses: "id,date,amount,category,subcategory,paymentMethod,card,installments,fuelPricePerLiter,fuelType,priority,description,merchant,createdAt"
 });
 
+db.version(4).stores({
+  expenses: "id,date,amount,category,subcategory,kind,deliveryProvider,deliveryProviderOther,paymentMethod,card,installments,fuelPricePerLiter,fuelType,priority,description,merchant,createdAt"
+});
+
 // seed minimal config stored in localStorage (V2 pode virar tabela)
 export function getDefaultConfig() {
   return {

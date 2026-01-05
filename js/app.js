@@ -23,6 +23,7 @@ const els = {
   tabs: Array.from(document.querySelectorAll(".tab")),
   panels: {
     home: document.getElementById("tab-home"),
+    expenses: document.getElementById("tab-expenses"),
     insights: document.getElementById("tab-insights"),
     settings: document.getElementById("tab-settings"),
   },
@@ -33,6 +34,11 @@ const els = {
   amount: document.getElementById("amount"),
   category: document.getElementById("category"),
   subcategory: document.getElementById("subcategory"),
+  kind: document.getElementById("kind"),
+  deliveryFields: document.getElementById("deliveryFields"),
+  deliveryProvider: document.getElementById("deliveryProvider"),
+  deliveryOtherField: document.getElementById("deliveryOtherField"),
+  deliveryProviderOther: document.getElementById("deliveryProviderOther"),
   paymentMethod: document.getElementById("paymentMethod"),
   cardField: document.getElementById("cardField"),
   card: document.getElementById("card"),
@@ -181,10 +187,30 @@ function refreshSubcategories({ keepSelection=true } = {}) {
   }
 
   updateFuelFieldsVisibility();
+  updateDeliveryFieldsVisibility();
 }
 
 function isFuelSelected() {
   return els.subcategory.value === "Combustível";
+}
+
+function isDeliverySelected() {
+  return els.subcategory.value === "Delivery";
+}
+
+function updateDeliveryFieldsVisibility() {
+  const show = isDeliverySelected();
+  els.deliveryFields.style.display = show ? "flex" : "none";
+  if (!show) {
+    els.deliveryProvider.value = "";
+    els.deliveryOtherField.style.display = "none";
+    els.deliveryProviderOther.value = "";
+    return;
+  }
+
+  const isOther = els.deliveryProvider.value === "outros";
+  els.deliveryOtherField.style.display = isOther ? "block" : "none";
+  if (!isOther) els.deliveryProviderOther.value = "";
 }
 
 function updateFuelFieldsVisibility() {
@@ -238,6 +264,8 @@ async function handleSubcategoryChange() {
 els.category.addEventListener("change", handleCategoryChange);
 els.subcategory.addEventListener("change", handleSubcategoryChange);
 els.subcategory.addEventListener("change", updateFuelFieldsVisibility);
+els.subcategory.addEventListener("change", updateDeliveryFieldsVisibility);
+els.deliveryProvider.addEventListener("change", updateDeliveryFieldsVisibility);
 refreshSubcategories({ keepSelection: false });
 
 els.paymentMethod.addEventListener("change", () => {
@@ -258,7 +286,10 @@ els.quickCopyLast.addEventListener("click", () => {
     description: lastExpense.description || "",
     installments: lastExpense.installments ?? "1",
     fuelPricePerLiter: lastExpense.fuelPricePerLiter ?? "",
-    fuelType: lastExpense.fuelType ?? ""
+    fuelType: lastExpense.fuelType ?? "",
+    kind: lastExpense.kind ?? "compra",
+    deliveryProvider: lastExpense.deliveryProvider ?? "",
+    deliveryProviderOther: lastExpense.deliveryProviderOther ?? ""
   }, false);
   els.amount.focus();
 });
@@ -274,6 +305,9 @@ els.form.addEventListener("submit", async (ev) => {
     amount: parseAmount(els.amount.value),
     category: els.category.value,
     subcategory: els.subcategory.value,
+    kind: els.kind.value,
+    deliveryProvider: isDeliverySelected() ? (els.deliveryProvider.value || "") : "",
+    deliveryProviderOther: isDeliverySelected() && els.deliveryProvider.value === "outros" ? (els.deliveryProviderOther.value || "").trim() : "",
     paymentMethod: els.paymentMethod.value,
     card: els.paymentMethod.value === "credito" ? (els.card.value || "") : "",
     installments: els.paymentMethod.value === "credito" ? Number(els.installments.value || 1) : 1,
@@ -307,6 +341,11 @@ els.form.addEventListener("submit", async (ev) => {
   els.fuelFields.style.display = "none";
   els.fuelPricePerLiter.value = "";
   els.fuelType.value = "";
+  els.kind.value = "compra";
+  els.deliveryFields.style.display = "none";
+  els.deliveryProvider.value = "";
+  els.deliveryOtherField.style.display = "none";
+  els.deliveryProviderOther.value = "";
   await reload();
 });
 
@@ -449,6 +488,11 @@ function renderList() {
       const e = await getExpenseById(id);
       if (!e) return;
       fillForm(e, true);
+      els.tabs.forEach(b => b.classList.remove("active"));
+      const homeTab = els.tabs.find(t => t.dataset.tab === "home");
+      if (homeTab) homeTab.classList.add("active");
+      Object.values(els.panels).forEach(p => p.classList.remove("active"));
+      els.panels.home.classList.add("active");
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
     onDelete: async (id) => {
@@ -472,6 +516,14 @@ function fillForm(e, editing) {
   refreshSubcategories({ keepSelection: false });
   els.subcategory.value = e.subcategory || (cfg.categories[els.category.value]?.[0] || "Diversos");
   updateFuelFieldsVisibility();
+  updateDeliveryFieldsVisibility();
+  els.kind.value = e.kind || "compra";
+
+  if (isDeliverySelected()) {
+    els.deliveryProvider.value = e.deliveryProvider || "";
+    els.deliveryProviderOther.value = e.deliveryProviderOther || "";
+    updateDeliveryFieldsVisibility();
+  }
   els.paymentMethod.value = e.paymentMethod || "pix";
 
   const isCredit = els.paymentMethod.value === "credito";

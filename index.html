@@ -18,7 +18,7 @@
 <body>
   <header class="app-header">
     <div class="brand">
-      <div class="logo">💸</div>
+      <div class="logo"><img src="./assets/logo.svg" alt="Controle de Gastos" /></div>
       <div>
         <div class="title">Controle de Gastos</div>
         <div class="subtitle">Offline • PWA • Salvo no aparelho</div>
@@ -34,6 +34,7 @@
 
   <nav class="tabs" aria-label="Navegação">
     <button class="tab active" data-tab="home">Registrar</button>
+    <button class="tab" data-tab="expenses">Gastos</button>
     <button class="tab" data-tab="insights">Insights</button>
     <button class="tab" data-tab="settings">Config</button>
   </nav>
@@ -66,6 +67,30 @@
                 <label for="subcategory">Subcategoria</label>
                 <select id="subcategory" name="subcategory" required></select>
               </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="kind">Tipo</label>
+                <select id="kind" name="kind" required>
+                  <option value="compra" selected>Compra</option>
+                  <option value="conta">Pagamento de conta</option>
+                </select>
+              </div>
+              <div class="field" id="deliveryFields" style="display:none;">
+                <label for="deliveryProvider">Delivery (opcional)</label>
+                <select id="deliveryProvider" name="deliveryProvider">
+                  <option value="">—</option>
+                  <option value="ifood">iFood</option>
+                  <option value="99">99</option>
+                  <option value="outros">Outros</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field" id="deliveryOtherField" style="display:none;">
+              <label for="deliveryProviderOther">Qual? (opcional)</label>
+              <input id="deliveryProviderOther" name="deliveryProviderOther" type="text" maxlength="40" placeholder="Ex: Rappi, Uber Eats..." />
             </div>
 
             <div class="row">
@@ -137,9 +162,9 @@
               <div class="field">
                 <label for="priority">Importância</label>
                 <select id="priority" name="priority" required>
-                  <option value="essencial">Essencial</option>
-                  <option value="importante">Importante</option>
-                  <option value="sem_importancia">Sem importância</option>
+                  <option value="essencial">Alta</option>
+                  <option value="importante">Média</option>
+                  <option value="sem_importancia">Baixa</option>
                 </select>
               </div>
 
@@ -166,56 +191,59 @@
             Dica: use “Copiar último” pra lançar rápido (só ajusta valor/data/descrição).
           </div>
         </section>
-
-        <section class="card">
-          <div class="card-head">
-            <h2>Seus gastos</h2>
-            <div class="pill" id="totalPill">Total: R$ 0,00</div>
-          </div>
-
-          <div class="filters">
-            <div class="row">
-              <div class="field">
-                <label for="rangeStart">Início</label>
-                <input id="rangeStart" type="date" />
-              </div>
-              <div class="field">
-                <label for="rangeEnd">Fim</label>
-                <input id="rangeEnd" type="date" />
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="field">
-                <label for="filterCategory">Categoria</label>
-                <select id="filterCategory"></select>
-              </div>
-              <div class="field">
-                <label for="filterPayment">Pagamento</label>
-                <select id="filterPayment">
-                  <option value="">Todos</option>
-                  <option value="pix">Pix</option>
-                  <option value="debito">Débito</option>
-                  <option value="credito">Crédito</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="field grow">
-                <label for="searchText">Buscar</label>
-                <input id="searchText" type="text" placeholder="descrição / loja..." />
-              </div>
-              <button class="btn btn-ghost" id="clearFilters" type="button">Limpar filtros</button>
-            </div>
-          </div>
-
-          <div id="expenseList" class="list"></div>
-          <div id="emptyState" class="empty" style="display:none;">
-            Nenhum gasto encontrado nesse filtro.
-          </div>
-        </section>
       </div>
+    </section>
+
+    <!-- EXPENSES -->
+    <section id="tab-expenses" class="tab-panel">
+      <section class="card">
+        <div class="card-head">
+          <h2>Seus gastos</h2>
+          <div class="pill" id="totalPill">Total: R$ 0,00</div>
+        </div>
+
+        <div class="filters">
+          <div class="row">
+            <div class="field">
+              <label for="rangeStart">Início</label>
+              <input id="rangeStart" type="date" />
+            </div>
+            <div class="field">
+              <label for="rangeEnd">Fim</label>
+              <input id="rangeEnd" type="date" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="filterCategory">Categoria</label>
+              <select id="filterCategory"></select>
+            </div>
+            <div class="field">
+              <label for="filterPayment">Pagamento</label>
+              <select id="filterPayment">
+                <option value="">Todos</option>
+                <option value="pix">Pix</option>
+                <option value="debito">Débito</option>
+                <option value="credito">Crédito</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field grow">
+              <label for="searchText">Buscar</label>
+              <input id="searchText" type="text" placeholder="descrição / loja..." />
+            </div>
+            <button class="btn btn-ghost" id="clearFilters" type="button">Limpar filtros</button>
+          </div>
+        </div>
+
+        <div id="expenseList" class="list"></div>
+        <div id="emptyState" class="empty" style="display:none;">
+          Nenhum gasto encontrado nesse filtro.
+        </div>
+      </section>
     </section>
 
     <!-- INSIGHTS -->
@@ -280,6 +308,14 @@
           <div class="chart-card">
             <h3>Por método de pagamento</h3>
             <canvas id="barChart" height="120"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Delivery (por app)</h3>
+            <canvas id="deliveryChart" height="120"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Compra vs Conta</h3>
+            <canvas id="kindChart" height="120"></canvas>
           </div>
         </div>
       </section>
