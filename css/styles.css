@@ -177,6 +177,29 @@ input:focus, select:focus { border-color: color-mix(in oklab, var(--primary) 70%
 .row .grow { flex: 2; }
 
 @media (max-width: 520px) {
+  .container { padding: 16px; }
+
+  .logo { width: 34px; height: 34px; }
+  .logo img { width: 45px; height: 38px; }
+  .title { font-size: 16px; }
+  .subtitle { font-size: 13px; }
+
+  label { font-size: 13px; }
+
+  input, select {
+    padding: 17px 1px;
+    border-radius: 14px;
+    font-size: 16px;
+  }
+
+  .btn {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+
+  .tabs { gap: 10px; padding: 12px 14px; }
+  .tab { padding: 12px 14px; font-size: 16px; }
+
   .row {
     flex-direction: column;
     align-items: stretch;
