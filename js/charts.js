@@ -100,10 +100,11 @@ export function buildInsights(expenses, mode) {
     byCategory[e.category] = (byCategory[e.category] || 0) + Number(e.amount || 0);
 
     const pm = e.paymentMethod === "credito" ? `Crédito${e.card ? ` (${e.card})` : ""}` :
-               e.paymentMethod === "debito" ? "Débito" : "Pix";
+               e.paymentMethod === "debito" ? `Débito${e.card ? ` (${e.card})` : ""}` :
+               e.paymentMethod === "dinheiro" ? "Dinheiro" : "Pix";
     byPayment[pm] = (byPayment[pm] || 0) + Number(e.amount || 0);
 
-    const knd = e.kind === "conta" ? "Conta" : (e.kind === "doacao" ? "Doação" : "Compra");
+    const knd = e.kind === "conta" ? "Pagamento de conta" : (e.kind === "doacao" ? "Doação" : "Compra");
     byKind[knd] = (byKind[knd] || 0) + Number(e.amount || 0);
 
     if (e.subcategory === "Delivery") {

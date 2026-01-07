@@ -42,12 +42,11 @@ const els = {
   paymentMethod: document.getElementById("paymentMethod"),
   cardField: document.getElementById("cardField"),
   card: document.getElementById("card"),
+  addCardBtn: document.getElementById("addCardBtn"),
   priority: document.getElementById("priority"),
   merchant: document.getElementById("merchant"),
   description: document.getElementById("description"),
   editingId: document.getElementById("editingId"),
-
-  quickCopyLast: document.getElementById("quickCopyLast"),
 
   installmentsField: document.getElementById("installmentsField"),
   installments: document.getElementById("installments"),
@@ -69,6 +68,8 @@ const els = {
 
   // insights
   periodMode: document.getElementById("periodMode"),
+  insStartField: document.getElementById("insStartField"),
+  insEndField: document.getElementById("insEndField"),
   insStart: document.getElementById("insStart"),
   insEnd: document.getElementById("insEnd"),
   refreshInsights: document.getElementById("refreshInsights"),
@@ -91,7 +92,6 @@ const els = {
 };
 
 let allExpenses = [];
-let lastExpense = null;
 
 let toastTimer = null;
 
@@ -202,7 +202,7 @@ if (els.backToSettings) {
 
 // ---------- INIT SELECTS ----------
 refreshCategoryOptions();
-setOptions(els.card, cfg.cards);
+refreshCardOptions();
 
 function getCategoryNames() {
   return Object.keys(cfg.categories || {});
@@ -224,6 +224,33 @@ function ensureSubcategoryExists(categoryName, subcategoryName) {
   if (!list.includes(sub)) list.push(sub);
 }
 
+function ensureCardExists(cardName) {
+  const name = String(cardName || "").trim();
+  if (!name) return;
+  cfg.cards = Array.isArray(cfg.cards) ? cfg.cards : [];
+  if (!cfg.cards.includes(name)) cfg.cards.push(name);
+}
+
+function refreshCardOptions({ keepSelection=true } = {}) {
+  const prev = keepSelection ? els.card.value : "";
+  const cards = Array.isArray(cfg.cards) ? cfg.cards : [];
+  els.card.innerHTML = "";
+
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "—";
+  els.card.appendChild(blank);
+
+  for (const cardName of cards) {
+    const opt = document.createElement("option");
+    opt.value = cardName;
+    opt.textContent = cardName;
+    els.card.appendChild(opt);
+  }
+
+  if (keepSelection) els.card.value = prev;
+}
+
 function setOptionsWithCustom(selectEl, options, { includeAll=false, allLabel="Todos", customLabel="Outros…" } = {}) {
   setOptions(selectEl, options, { includeAll, allLabel });
   const opt = document.createElement("option");
@@ -237,7 +264,7 @@ function refreshCategoryOptions({ keepSelection=true } = {}) {
   const prevFilter = keepSelection ? els.filterCategory.value : "";
   const categoryNames = getCategoryNames();
 
-  setOptionsWithCustom(els.category, categoryNames);
+  setOptionsWithCustom(els.category, categoryNames, { customLabel: "Adicionar nova categoria…" });
   setOptions(els.filterCategory, categoryNames, { includeAll: true, allLabel: "Todas" });
 
   if (keepSelection) {
@@ -251,7 +278,7 @@ function refreshSubcategories({ keepSelection=true } = {}) {
   const prevSub = keepSelection ? els.subcategory.value : "";
 
   const subs = (cfg.categories && cfg.categories[cat]) ? cfg.categories[cat] : ["Diversos"];
-  setOptionsWithCustom(els.subcategory, subs);
+  setOptionsWithCustom(els.subcategory, subs, { customLabel: "Adicionar nova subcategoria…" });
 
   if (keepSelection && prevSub && subs.includes(prevSub)) {
     els.subcategory.value = prevSub;
@@ -341,38 +368,82 @@ refreshSubcategories({ keepSelection: false });
 
 els.paymentMethod.addEventListener("change", () => {
   const isCredit = els.paymentMethod.value === "credito";
-  els.cardField.style.display = isCredit ? "" : "none";
+  const isDebit = els.paymentMethod.value === "debito";
+  const needsCard = isCredit || isDebit;
+
+  els.cardField.style.display = needsCard ? "" : "none";
   els.installmentsField.style.display = isCredit ? "" : "none";
-  if (!isCredit) els.card.value = "";
+  els.card.required = needsCard;
+
+  if (!needsCard) els.card.value = "";
   if (!isCredit) els.installments.value = "1";
 });
 
+els.installments.addEventListener("change", () => {
+  if (els.installments.value !== CUSTOM_OPTION_VALUE) return;
+  const raw = prompt("Quantas parcelas? (ex: 18)")?.trim();
+  if (!raw) {
+    els.installments.value = "1";
+    return;
+  }
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 1) {
+    alert("Número de parcelas inválido.");
+    els.installments.value = "1";
+    return;
+  }
+
+  const val = String(Math.floor(n));
+  let opt = Array.from(els.installments.options).find(o => o.value === val);
+  if (!opt) {
+    opt = document.createElement("option");
+    opt.value = val;
+    opt.textContent = `${val}x`;
+    const customOpt = Array.from(els.installments.options).find(o => o.value === CUSTOM_OPTION_VALUE);
+    els.installments.insertBefore(opt, customOpt || null);
+  }
+  els.installments.value = val;
+});
+
+if (els.addCardBtn) {
+  els.addCardBtn.addEventListener("click", () => {
+    const name = prompt("Nome do cartão (ex: Nubank, Itaú, Inter):")?.trim();
+    if (!name) return;
+    ensureCardExists(name);
+    saveConfig(cfg);
+    refreshCardOptions({ keepSelection: false });
+    els.card.value = name;
+  });
+}
+
 updateDeliveryFieldsVisibility();
 els.paymentMethod.dispatchEvent(new Event("change"));
-
-els.quickCopyLast.addEventListener("click", () => {
-  if (!lastExpense) return alert("Ainda não existe gasto anterior para copiar.");
-  fillForm({
-    ...lastExpense,
-    id: "",
-    date: todayISO(),
-    amount: "",
-    description: lastExpense.description || "",
-    installments: lastExpense.installments ?? "1",
-    fuelPricePerLiter: lastExpense.fuelPricePerLiter ?? "",
-    fuelType: lastExpense.fuelType ?? "",
-    kind: lastExpense.kind ?? "compra",
-    deliveryProvider: lastExpense.deliveryProvider ?? "",
-    deliveryProviderOther: lastExpense.deliveryProviderOther ?? ""
-  }, false);
-  els.amount.focus();
-});
 
 // ---------- FORM SUBMIT ----------
 els.form.addEventListener("submit", async (ev) => {
   ev.preventDefault();
 
+  if (!String(els.amount.value || "").trim()) {
+    alert("Você não cadastrou o valor.");
+    els.amount.focus();
+    return;
+  }
+
   const isEditing = Boolean(els.editingId.value);
+  const isCredit = els.paymentMethod.value === "credito";
+  const isDebit = els.paymentMethod.value === "debito";
+  const needsCard = isCredit || isDebit;
+
+  if (needsCard && !els.card.value) {
+    alert("Selecione um cartão (ou adicione um novo). ");
+    return;
+  }
+
+  if (needsCard && els.card.value) {
+    ensureCardExists(els.card.value);
+    saveConfig(cfg);
+    refreshCardOptions();
+  }
 
   const payload = {
     date: els.date.value,
@@ -383,9 +454,9 @@ els.form.addEventListener("submit", async (ev) => {
     deliveryProvider: isDeliverySelected() ? (els.deliveryProvider.value || "") : "",
     deliveryProviderOther: isDeliverySelected() && els.deliveryProvider.value === "outros" ? (els.deliveryProviderOther.value || "").trim() : "",
     paymentMethod: els.paymentMethod.value,
-    card: els.paymentMethod.value === "credito" ? (els.card.value || "") : "",
-    installments: els.paymentMethod.value === "credito" ? Number(els.installments.value || 1) : 1,
-    fuelPricePerLiter: isFuelSelected() && els.fuelPricePerLiter.value !== "" ? Number(els.fuelPricePerLiter.value) : undefined,
+    card: needsCard ? (els.card.value || "") : "",
+    installments: isCredit ? Number(els.installments.value || 1) : 1,
+    fuelPricePerLiter: isFuelSelected() ? parseAmount(els.fuelPricePerLiter.value) : 0,
     fuelType: isFuelSelected() ? (els.fuelType.value || "") : "",
     priority: els.priority.value,
     merchant: (els.merchant.value || "").trim(),
@@ -515,6 +586,22 @@ els.resetAll.addEventListener("click", async () => {
 // ---------- INSIGHTS ----------
 initCharts();
 els.refreshInsights.addEventListener("click", refreshInsights);
+updateInsightsRangeVisibility();
+
+els.periodMode.addEventListener("change", () => {
+  updateInsightsRangeVisibility();
+  refreshInsights();
+});
+
+function updateInsightsRangeVisibility() {
+  const isRange = els.periodMode.value === "range";
+  if (els.insStartField) els.insStartField.style.display = isRange ? "" : "none";
+  if (els.insEndField) els.insEndField.style.display = isRange ? "" : "none";
+  if (!isRange) {
+    els.insStart.value = "";
+    els.insEnd.value = "";
+  }
+}
 
 function refreshInsights() {
   const mode = els.periodMode.value;
@@ -535,7 +622,7 @@ function refreshInsights() {
   els.statTopCat.textContent = ins.stats.topCategory || "—";
 
   const labelMode = ({
-    daily: "Diária", weekly: "Semanal", monthly: "Mensal", yearly: "Anual", range: "Range"
+    daily: "Diária", weekly: "Semanal", monthly: "Mensal", yearly: "Anual", range: "Escolher período"
   })[mode] || "—";
   els.insightsPill.textContent = `Período: ${labelMode}${start || end ? ` (${start || "…"} → ${end || "…"})` : ""}`;
 }
@@ -543,7 +630,6 @@ function refreshInsights() {
 // ---------- LOAD ----------
 async function reload() {
   allExpenses = await getAllExpenses();
-  lastExpense = allExpenses[0] || null;
 
   renderList();
   refreshInsights();
@@ -593,8 +679,10 @@ function renderList() {
 function fillForm(e, editing) {
   if (e?.category) ensureCategoryExists(e.category);
   if (e?.category && e?.subcategory) ensureSubcategoryExists(e.category, e.subcategory);
+  if ((e?.paymentMethod === "credito" || e?.paymentMethod === "debito") && e?.card) ensureCardExists(e.card);
   saveConfig(cfg);
   refreshCategoryOptions({ keepSelection: true });
+  refreshCardOptions({ keepSelection: true });
 
   els.date.value = e.date || todayISO();
   els.amount.value = e.amount ?? "";
@@ -613,9 +701,12 @@ function fillForm(e, editing) {
   els.paymentMethod.value = e.paymentMethod || "pix";
 
   const isCredit = els.paymentMethod.value === "credito";
-  els.cardField.style.display = isCredit ? "block" : "none";
-  els.installmentsField.style.display = isCredit ? "block" : "none";
-  els.card.value = isCredit ? (e.card || "") : "";
+  const isDebit = els.paymentMethod.value === "debito";
+  const needsCard = isCredit || isDebit;
+  els.cardField.style.display = needsCard ? "" : "none";
+  els.installmentsField.style.display = isCredit ? "" : "none";
+  els.card.required = needsCard;
+  els.card.value = needsCard ? (e.card || "") : "";
   els.installments.value = String(isCredit ? (e.installments ?? 1) : 1);
 
   if (isFuelSelected()) {

@@ -81,6 +81,7 @@
               <div class="field">
                 <label for="paymentMethod">Método de pagamento</label>
                 <select id="paymentMethod" name="paymentMethod" required>
+                  <option value="dinheiro">Dinheiro</option>
                   <option value="pix">Pix</option>
                   <option value="debito">Débito</option>
                   <option value="credito">Crédito</option>
@@ -120,6 +121,7 @@
                 <select id="card" name="card">
                   <option value="">—</option>
                 </select>
+                <button class="btn btn-ghost" id="addCardBtn" type="button">Adicionar cartão</button>
               </div>
 
               <div class="field" id="installmentsField" style="display:none;">
@@ -140,15 +142,7 @@
                   <option value="13">13x</option>
                   <option value="14">14x</option>
                   <option value="15">15x</option>
-                  <option value="16">16x</option>
-                  <option value="17">17x</option>
-                  <option value="18">18x</option>
-                  <option value="19">19x</option>
-                  <option value="20">20x</option>
-                  <option value="21">21x</option>
-                  <option value="22">22x</option>
-                  <option value="23">23x</option>
-                  <option value="24">24x</option>
+                  <option value="__custom__">Mais…</option>
                 </select>
               </div>
             </div>
@@ -178,21 +172,18 @@
             </div>
 
             <div class="field">
-              <label for="description">Descrição</label>
+              <label for="description">Descrição (opcional)</label>
               <input id="description" name="description" type="text" maxlength="80" placeholder="Ex: almoço, remédio, gasolina..." />
             </div>
 
             <div class="row">
               <button class="btn btn-primary" type="submit">Salvar gasto</button>
-              <button class="btn btn-ghost" id="quickCopyLast" type="button">Copiar último</button>
             </div>
 
             <input id="editingId" name="editingId" type="hidden" />
           </form>
 
-          <div class="hint">
-            Dica: use “Copiar último” pra lançar rápido (só ajusta valor/data/descrição).
-          </div>
+          <div class="hint"></div>
         </section>
 
       </div>
@@ -266,20 +257,20 @@
             <div class="field">
               <label for="periodMode">Visão</label>
               <select id="periodMode">
-                <option value="daily">Diária</option>
+                <option value="daily" selected>Diária</option>
                 <option value="weekly">Semanal</option>
-                <option value="monthly" selected>Mensal</option>
+                <option value="monthly">Mensal</option>
                 <option value="yearly">Anual</option>
-                <option value="range">Range</option>
+                <option value="range">Escolher período</option>
               </select>
             </div>
 
-            <div class="field">
+            <div class="field" id="insStartField" style="display:none;">
               <label for="insStart">Início</label>
               <input id="insStart" type="date" />
             </div>
 
-            <div class="field">
+            <div class="field" id="insEndField" style="display:none;">
               <label for="insEnd">Fim</label>
               <input id="insEnd" type="date" />
             </div>
@@ -314,14 +305,14 @@
           </div>
           <div class="chart-card">
             <h3>Por método de pagamento</h3>
-            <canvas id="barChart" height="120"></canvas>
+            <canvas id="barChart" height="200"></canvas>
           </div>
           <div class="chart-card">
             <h3>Delivery (por app)</h3>
             <canvas id="deliveryChart" height="120"></canvas>
           </div>
           <div class="chart-card">
-            <h3>Compra vs Conta</h3>
+            <h3>Tipo de gasto</h3>
             <canvas id="kindChart" height="120"></canvas>
           </div>
         </div>

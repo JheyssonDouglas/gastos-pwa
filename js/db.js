@@ -21,17 +21,18 @@ db.version(4).stores({
 export function getDefaultConfig() {
   return {
     categories: {
-      "Alimentação": ["Mercado", "Restaurante", "Delivery", "Café"],
-      "Transporte": ["Uber/99", "Combustível", "Estacionamento", "Ônibus/Metrô"],
-      "Casa": ["Aluguel", "Condomínio", "Luz", "Água", "Internet", "Manutenção"],
-      "Saúde": ["Farmácia", "Médico", "Exames", "Academia"],
+      "Moradia": ["Aluguel", "Condomínio", "Luz", "Água", "Internet", "Manutenção", "Outros"],
+      "Mercado": ["Supermercado", "Padaria", "Açougue", "Hortifruti", "Outros"],
+      "Alimentação": ["Restaurante", "Delivery", "Café", "Outros"],
+      "Transporte": ["Uber/99", "Combustível", "Estacionamento", "Ônibus/Metrô", "Outros"],
+      "Saúde": ["Farmácia", "Médico", "Exames", "Academia", "Outros"],
+      "Compras": ["Roupas", "Eletrônicos", "Presentes", "Outros"],
+      "Lazer": ["Cinema", "Viagem", "Jogos", "Outros"],
       "Assinaturas": ["Streaming", "Apps", "Outros"],
-      "Compras": ["Roupas", "Eletrônicos", "Presentes"],
-      "Lazer": ["Cinema", "Viagem", "Jogos"],
-      "Educação": ["Cursos", "Livros"],
-      "Outros": ["Diversos"]
+      "Educação": ["Cursos", "Livros", "Outros"],
+      "Outros": ["Outros"]
     },
-    cards: ["Itaú", "Sam’s Clube", "Carrefour", "C&A", "Riachuello", "iFood"]
+    cards: []
   };
 }
 
@@ -40,14 +41,9 @@ export function loadConfig() {
   if (raw) {
     try {
       const cfg = JSON.parse(raw);
-      // garante cartões novos sem quebrar configs antigas
-      const defaults = getDefaultConfig();
       cfg.cards = Array.isArray(cfg.cards) ? cfg.cards : [];
-      for (const c of defaults.cards) {
-        if (!cfg.cards.includes(c)) cfg.cards.push(c);
-      }
       // garante categories obj
-      if (!cfg.categories || typeof cfg.categories !== "object") cfg.categories = defaults.categories;
+      if (!cfg.categories || typeof cfg.categories !== "object") cfg.categories = getDefaultConfig().categories;
       localStorage.setItem("gastos_config_v1", JSON.stringify(cfg));
       return cfg;
     } catch {}

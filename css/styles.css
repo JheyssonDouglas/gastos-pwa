@@ -207,9 +207,14 @@ input:focus, select:focus { border-color: color-mix(in oklab, var(--primary) 70%
   label { font-size: 13px; }
 
   input, select {
-    padding: 17px 1px;
+    padding: 16px 12px;
     border-radius: 14px;
     font-size: 16px;
+  }
+
+  input[type="date"],
+  input[type="number"] {
+    height: 52px;
   }
 
   .btn {

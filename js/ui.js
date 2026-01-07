@@ -57,7 +57,8 @@ export function renderExpenses(listEl, expenses, handlers) {
 
 function labelPayment(method, card) {
   if (method === "credito") return `Crédito${card ? ` (${card})` : ""}`;
-  if (method === "debito") return "Débito";
+  if (method === "debito") return `Débito${card ? ` (${card})` : ""}`;
+  if (method === "dinheiro") return "Dinheiro";
   return "Pix";
 }
 
