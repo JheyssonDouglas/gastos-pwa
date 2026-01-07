@@ -34,7 +34,6 @@
 
   <nav class="tabs" aria-label="Navegação">
     <button class="tab active" data-tab="home">Registrar</button>
-    <button class="tab" data-tab="expenses">Gastos</button>
     <button class="tab" data-tab="insights">Insights</button>
     <button class="tab" data-tab="settings">Config</button>
   </nav>
@@ -47,7 +46,7 @@
           <h2>Novo gasto</h2>
 
           <form id="expenseForm" class="form">
-            <div class="row">
+            <div class="row row-2">
               <div class="field">
                 <label for="date">Data</label>
                 <input id="date" name="date" type="date" required />
@@ -58,7 +57,7 @@
               </div>
             </div>
 
-            <div class="row">
+            <div class="row row-2">
               <div class="field">
                 <label for="category">Categoria</label>
                 <select id="category" name="category" required></select>
@@ -69,7 +68,7 @@
               </div>
             </div>
 
-            <div class="row">
+            <div class="row row-3">
               <div class="field">
                 <label for="kind">Tipo</label>
                 <select id="kind" name="kind" required>
@@ -78,6 +77,27 @@
                   <option value="doacao">Doação</option>
                 </select>
               </div>
+
+              <div class="field">
+                <label for="paymentMethod">Método de pagamento</label>
+                <select id="paymentMethod" name="paymentMethod" required>
+                  <option value="pix">Pix</option>
+                  <option value="debito">Débito</option>
+                  <option value="credito">Crédito</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="priority">Importância</label>
+                <select id="priority" name="priority" required>
+                  <option value="essencial">Alta</option>
+                  <option value="importante">Média</option>
+                  <option value="sem_importancia">Baixa</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
               <div class="field" id="deliveryFields" style="display:none;">
                 <label for="deliveryProvider">Delivery (opcional)</label>
                 <select id="deliveryProvider" name="deliveryProvider">
@@ -95,15 +115,6 @@
             </div>
 
             <div class="row">
-              <div class="field">
-                <label for="paymentMethod">Método de pagamento</label>
-                <select id="paymentMethod" name="paymentMethod" required>
-                  <option value="pix">Pix</option>
-                  <option value="debito">Débito</option>
-                  <option value="credito">Crédito</option>
-                </select>
-              </div>
-
               <div class="field" id="cardField" style="display:none;">
                 <label for="card">Cartão</label>
                 <select id="card" name="card">
@@ -161,15 +172,6 @@
 
             <div class="row">
               <div class="field">
-                <label for="priority">Importância</label>
-                <select id="priority" name="priority" required>
-                  <option value="essencial">Alta</option>
-                  <option value="importante">Média</option>
-                  <option value="sem_importancia">Baixa</option>
-                </select>
-              </div>
-
-              <div class="field">
                 <label for="merchant">Onde/Loja (opcional)</label>
                 <input id="merchant" name="merchant" type="text" maxlength="60" placeholder="Ex: Carrefour, iFood, Farmácia..." />
               </div>
@@ -192,6 +194,7 @@
             Dica: use “Copiar último” pra lançar rápido (só ajusta valor/data/descrição).
           </div>
         </section>
+
       </div>
     </section>
 
@@ -199,8 +202,11 @@
     <section id="tab-expenses" class="tab-panel">
       <section class="card">
         <div class="card-head">
-          <h2>Seus gastos</h2>
-          <div class="pill" id="totalPill">Total: R$ 0,00</div>
+          <h2>Seus registros</h2>
+          <div class="row">
+            <button class="btn btn-ghost" id="backToSettings" type="button">Voltar</button>
+            <div class="pill" id="totalPill">Total: R$ 0,00</div>
+          </div>
         </div>
 
         <div class="filters">
@@ -329,26 +335,18 @@
 
         <div class="settings-grid">
           <div class="settings-card">
-            <h3>Categorias</h3>
-            <p>Você pode editar isso depois (V2). Por enquanto vem com um padrão bom.</p>
+            <h3>Backup</h3>
+            <div class="row">
+              <button class="btn" id="exportCsv" type="button">Exportar CSV</button>
+              <button class="btn btn-ghost" id="importCsv" type="button">Importar CSV</button>
+            </div>
+
+            <input id="importCsvFile" type="file" accept="text/csv,.csv" style="display:none;" />
           </div>
 
           <div class="settings-card">
-            <h3>Backup</h3>
-            <div class="row">
-              <button class="btn btn-primary" id="exportJson" type="button">Exportar JSON</button>
-              <button class="btn btn-ghost" id="importJson" type="button">Importar JSON</button>
-            </div>
-
-            <div class="row">
-              <button class="btn btn-primary" id="exportCsv" type="button">Exportar CSV</button>
-              <button class="btn btn-ghost" id="exportSheets" type="button">Exportar p/ Google Sheets</button>
-            </div>
-
-            <input id="importFile" type="file" accept="application/json" style="display:none;" />
-            <div class="hint">
-              “Google Sheets”: gera CSV e abre uma planilha nova (sheet.new) pra você importar.
-            </div>
+            <h3>Seus Registros</h3>
+            <button class="btn" id="openExpenses" type="button">Seus Registros</button>
           </div>
 
           <div class="settings-card danger">

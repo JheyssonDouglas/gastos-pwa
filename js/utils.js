@@ -131,3 +131,69 @@ export function downloadFile(filename, content, mime="text/plain") {
   a.remove();
   URL.revokeObjectURL(url);
 }
+
+export function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (inQuotes) {
+      if (ch === '"' && next === '"') {
+        cell += '"';
+        i++;
+        continue;
+      }
+      if (ch === '"') {
+        inQuotes = false;
+        continue;
+      }
+      cell += ch;
+      continue;
+    }
+
+    if (ch === '"') {
+      inQuotes = true;
+      continue;
+    }
+
+    if (ch === ",") {
+      row.push(cell);
+      cell = "";
+      continue;
+    }
+
+    if (ch === "\n") {
+      row.push(cell);
+      cell = "";
+      if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
+      row = [];
+      continue;
+    }
+
+    if (ch === "\r") continue;
+
+    cell += ch;
+  }
+
+  row.push(cell);
+  if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
+
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => String(h || "").trim());
+  const out = [];
+
+  for (let r = 1; r < rows.length; r++) {
+    const obj = {};
+    for (let c = 0; c < headers.length; c++) {
+      obj[headers[c]] = rows[r][c] ?? "";
+    }
+    out.push(obj);
+  }
+
+  return out;
+}

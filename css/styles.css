@@ -141,7 +141,7 @@ body {
   gap: 14px;
 }
 @media (min-width: 980px) {
-  .grid { grid-template-columns: 420px 1fr; align-items: start; }
+  .grid { grid-template-columns: 420px; justify-content: center; align-items: start; }
 }
 
 .card {
@@ -166,15 +166,35 @@ input, select {
   background: color-mix(in oklab, var(--card) 85%, transparent);
   color: var(--text);
   outline: none;
+  width: 100%;
   max-width: 100%;
 }
+
+input[type="number"] {
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+ #amount {
+   padding-left: 14px;
+ }
+
 input:focus, select:focus { border-color: color-mix(in oklab, var(--primary) 70%, var(--border)); }
 
 .row {
   display: flex; gap: 10px; align-items: end;
 }
-.row .field { flex: 1; }
+.row .field { flex: 1; min-width: 0; }
 .row .grow { flex: 2; }
+
+ .form > .row:last-of-type {
+   margin-top: 10px;
+ }
 
 @media (max-width: 520px) {
   .container { padding: 16px; }
@@ -207,6 +227,18 @@ input:focus, select:focus { border-color: color-mix(in oklab, var(--primary) 70%
   .row .field,
   .row .grow {
     flex: initial;
+  }
+
+  .row.row-2,
+  .row.row-3 {
+    flex-direction: row;
+    align-items: end;
+  }
+
+  .row.row-2 .field,
+  .row.row-3 .field {
+    flex: 1;
+    min-width: 0;
   }
 }
 

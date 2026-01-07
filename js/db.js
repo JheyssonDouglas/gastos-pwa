@@ -81,6 +81,10 @@ export async function getExpenseById(id) {
   return await db.expenses.get(id);
 }
 
+export async function upsertExpenses(expenses) {
+  await db.expenses.bulkPut(expenses);
+}
+
 export async function clearAll() {
   await db.expenses.clear();
 }

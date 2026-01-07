@@ -1,12 +1,12 @@
 // app.js
 import {
   loadConfig, addExpense, updateExpense, deleteExpense, getAllExpenses,
-  getExpenseById, clearAll, saveConfig
+  getExpenseById, clearAll, saveConfig, upsertExpenses
 } from "./db.js";
 
 import {
   uid, todayISO, parseAmount, formatBRL,
-  inRangeISO, includesText, toCSV, downloadFile, toLocalISOString, normalizeCreatedAt
+  inRangeISO, includesText, toCSV, parseCSV, downloadFile, toLocalISOString, normalizeCreatedAt
 } from "./utils.js";
 
 import { setOptions, renderExpenses } from "./ui.js";
@@ -78,11 +78,11 @@ const els = {
   statTopCat: document.getElementById("statTopCat"),
 
   // settings
-  exportJson: document.getElementById("exportJson"),
-  importJson: document.getElementById("importJson"),
-  importFile: document.getElementById("importFile"),
   exportCsv: document.getElementById("exportCsv"),
-  exportSheets: document.getElementById("exportSheets"),
+  importCsv: document.getElementById("importCsv"),
+  importCsvFile: document.getElementById("importCsvFile"),
+  openExpenses: document.getElementById("openExpenses"),
+  backToSettings: document.getElementById("backToSettings"),
   resetAll: document.getElementById("resetAll"),
   toast: document.getElementById("toast"),
   confirmOverlay: document.getElementById("confirmOverlay"),
@@ -173,11 +173,32 @@ els.tabs.forEach(btn => {
 
     const tab = btn.dataset.tab;
     Object.values(els.panels).forEach(p => p.classList.remove("active"));
-    els.panels[tab].classList.add("active");
+    const panel = els.panels[tab];
+    if (panel) panel.classList.add("active");
 
     if (tab === "insights") refreshInsights();
   });
 });
+
+if (els.openExpenses) {
+  els.openExpenses.addEventListener("click", () => {
+    els.tabs.forEach(b => b.classList.remove("active"));
+    const settingsTab = els.tabs.find(t => t.dataset.tab === "settings");
+    if (settingsTab) settingsTab.classList.add("active");
+    Object.values(els.panels).forEach(p => p.classList.remove("active"));
+    if (els.panels.expenses) els.panels.expenses.classList.add("active");
+  });
+}
+
+if (els.backToSettings) {
+  els.backToSettings.addEventListener("click", () => {
+    els.tabs.forEach(b => b.classList.remove("active"));
+    const settingsTab = els.tabs.find(t => t.dataset.tab === "settings");
+    if (settingsTab) settingsTab.classList.add("active");
+    Object.values(els.panels).forEach(p => p.classList.remove("active"));
+    if (els.panels.settings) els.panels.settings.classList.add("active");
+  });
+}
 
 // ---------- INIT SELECTS ----------
 refreshCategoryOptions();
@@ -250,7 +271,7 @@ function isDeliverySelected() {
 
 function updateDeliveryFieldsVisibility() {
   const show = isDeliverySelected();
-  els.deliveryFields.style.display = show ? "flex" : "none";
+  els.deliveryFields.style.display = show ? "" : "none";
   if (!show) {
     els.deliveryProvider.value = "";
     els.deliveryOtherField.style.display = "none";
@@ -320,11 +341,14 @@ refreshSubcategories({ keepSelection: false });
 
 els.paymentMethod.addEventListener("change", () => {
   const isCredit = els.paymentMethod.value === "credito";
-  els.cardField.style.display = isCredit ? "block" : "none";
-  els.installmentsField.style.display = isCredit ? "block" : "none";
+  els.cardField.style.display = isCredit ? "" : "none";
+  els.installmentsField.style.display = isCredit ? "" : "none";
   if (!isCredit) els.card.value = "";
   if (!isCredit) els.installments.value = "1";
 });
+
+updateDeliveryFieldsVisibility();
+els.paymentMethod.dispatchEvent(new Event("change"));
 
 els.quickCopyLast.addEventListener("click", () => {
   if (!lastExpense) return alert("Ainda não existe gasto anterior para copiar.");
@@ -416,57 +440,67 @@ els.clearFilters.addEventListener("click", () => {
   renderList();
 });
 
-// ---------- SETTINGS ----------
-els.exportJson.addEventListener("click", async () => {
-  const data = await getAllExpenses();
-  const normalized = data.map(e => ({
-    ...e,
-    createdAt: normalizeCreatedAt(e.createdAt)
-  }));
-  const json = JSON.stringify({ version: 1, exportedAt: toLocalISOString(new Date()), expenses: normalized }, null, 2);
-  downloadFile(`gastos-backup-${todayISO()}.json`, json, "application/json");
-});
-
+// ---------- SETTINGS (BACKUP CSV) ----------
 els.exportCsv.addEventListener("click", async () => {
   const data = await getAllExpenses();
   const csv = toCSV(data);
   downloadFile(`gastos-${todayISO()}.csv`, csv, "text/csv;charset=utf-8");
 });
 
-els.exportSheets.addEventListener("click", async () => {
-  const data = await getAllExpenses();
-  const csv = toCSV(data);
-  downloadFile(`gastos-${todayISO()}.csv`, csv, "text/csv;charset=utf-8");
+els.importCsv.addEventListener("click", () => els.importCsvFile.click());
 
-  // Abre planilha nova. Depois: Arquivo > Importar > Upload > selecione o CSV.
-  window.open("https://sheet.new", "_blank");
-});
-
-els.importJson.addEventListener("click", () => els.importFile.click());
-
-els.importFile.addEventListener("change", async () => {
-  const file = els.importFile.files?.[0];
+els.importCsvFile.addEventListener("change", async () => {
+  const file = els.importCsvFile.files?.[0];
   if (!file) return;
 
   try {
     const text = await file.text();
-    const obj = JSON.parse(text);
-    if (!obj?.expenses || !Array.isArray(obj.expenses)) throw new Error("Arquivo inválido.");
+    const rows = parseCSV(text);
+    if (!rows.length) throw new Error("CSV vazio ou inválido");
 
-    // Import: adiciona/atualiza por id
-    for (const e of obj.expenses) {
-      if (!e.id) continue;
-      await updateExpense(e.id, e).catch(async () => {
-        await addExpense(e);
+    const imported = [];
+    for (const r of rows) {
+      const id = (r.id || "").trim() || uid();
+      const date = (r.date || "").trim();
+      if (!date) continue;
+
+      const amount = Number(String(r.amount ?? "").replaceAll(",", "."));
+      const installmentsRaw = (r.installments ?? "").trim();
+      const installments = installmentsRaw === "" ? undefined : Number(installmentsRaw);
+
+      const fuelPriceRaw = (r.fuelPricePerLiter ?? "").trim();
+      const fuelPricePerLiter = fuelPriceRaw === "" ? undefined : Number(String(fuelPriceRaw).replaceAll(",", "."));
+
+      imported.push({
+        id,
+        date,
+        amount: Number.isFinite(amount) ? amount : 0,
+        category: (r.category || "").trim(),
+        subcategory: (r.subcategory || "").trim(),
+        kind: (r.kind || "").trim() || "compra",
+        deliveryProvider: (r.deliveryProvider || "").trim(),
+        deliveryProviderOther: (r.deliveryProviderOther || "").trim(),
+        paymentMethod: (r.paymentMethod || "").trim() || "pix",
+        card: (r.card || "").trim(),
+        installments: Number.isFinite(installments) ? installments : undefined,
+        fuelPricePerLiter: Number.isFinite(fuelPricePerLiter) ? fuelPricePerLiter : undefined,
+        fuelType: (r.fuelType || "").trim(),
+        priority: (r.priority || "").trim() || "importante",
+        merchant: (r.merchant || "").trim(),
+        description: (r.description || "").trim(),
+        createdAt: normalizeCreatedAt(r.createdAt || toLocalISOString(new Date()))
       });
     }
 
+    if (!imported.length) throw new Error("Nenhum registro válido encontrado no CSV");
+    await upsertExpenses(imported);
+
     alert("Importação concluída!");
-    els.importFile.value = "";
+    els.importCsvFile.value = "";
     await reload();
   } catch (err) {
     console.error(err);
-    alert("Falha ao importar. Verifique se é um JSON exportado pelo app.");
+    alert("Falha ao importar CSV. Veja o console.");
   }
 });
 
